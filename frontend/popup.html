@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YT Sentiment Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo-mark">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect width="22" height="22" rx="6" fill="url(#hg)" />
+                <path d="M7 11.5L10 14.5L15 8" stroke="white" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <defs>
+                    <linearGradient id="hg" x1="0" y1="0" x2="22" y2="22">
+                        <stop offset="0%" stop-color="#ff4444" />
+                        <stop offset="100%" stop-color="#c026d3" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <div class="header-text">
+            <span class="app-name">Sentiment AI</span>
+            <span class="app-sub">YouTube Analyzer</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="live-dot" id="live-dot"></div>
+        <span class="live-label" id="live-label">Loading…</span>
+    </div>
+</header>
+
+<!-- ─── MAIN CONTENT ─── -->
+<main class="main" id="main">
+
+    <!-- NOT ON YOUTUBE STATE -->
+    <div class="state-screen" id="screen-not-yt">
+        <div class="state-icon">📺</div>
+        <h2 class="state-title">Open a YouTube Video</h2>
+        <p class="state-desc">Navigate to any YouTube video page and click the extension again to analyze its comments.</p>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div class="state-screen hidden" id="screen-loading">
+        <div class="loader-ring" id="loader-ring">
+            <svg viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="24" stroke="#1e1e2a" stroke-width="5" fill="none" />
+                <circle cx="30" cy="30" r="24" stroke="url(#lg)" stroke-width="5" fill="none"
+                    stroke-dasharray="150.8" stroke-dashoffset="120"
+                    stroke-linecap="round" id="spin-circle" />
+                <defs>
+                    <linearGradient id="lg" x1="0" y1="0" x2="60" y2="60">
+                        <stop offset="0%" stop-color="#ff4444" />
+                        <stop offset="100%" stop-color="#c026d3" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        <p class="loading-text" id="loading-text">Scanning comments…</p>
+    </div>
+
+    <!-- RESULTS STATE -->
+    <div class="results-wrap hidden" id="screen-results">
+
+        <!-- Donut Chart + Overall -->
+        <div class="overview-row">
+
+            <div class="donut-wrap">
+                <svg class="donut-svg" viewBox="0 0 120 120" id="donut-svg">
+                    <circle cx="60" cy="60" r="46" fill="none" stroke="#1a1a28" stroke-width="14" />
+                    <!-- Negative arc -->
+                    <circle cx="60" cy="60" r="46" fill="none"
+                        stroke="#ff4444" stroke-width="14"
+                        stroke-dasharray="289" stroke-dashoffset="289"
+                        stroke-linecap="round"
+                        transform="rotate(-90 60 60)"
+                        id="arc-neg" />
+                    <!-- Neutral arc -->
+                    <circle cx="60" cy="60" r="46" fill="none"
+                        stroke="#f59e0b" stroke-width="14"
+                        stroke-dasharray="289" stroke-dashoffset="289"
+                        stroke-linecap="round"
+                        transform="rotate(-90 60 60)"
+                        id="arc-neu" />
+                    <!-- Positive arc -->
+                    <circle cx="60" cy="60" r="46" fill="none"
+                        stroke="#22c55e" stroke-width="14"
+                        stroke-dasharray="289" stroke-dashoffset="289"
+                        stroke-linecap="round"
+                        transform="rotate(-90 60 60)"
+                        id="arc-pos" />
+                </svg>
+                <div class="donut-center">
+                    <span class="donut-total" id="donut-total">0</span>
+                    <span class="donut-lbl">comments</span>
+                </div>
+            </div>
+
+            <div class="legend-col">
+                <div class="legend-item" id="leg-pos">
+                    <div class="leg-dot" style="background:#22c55e;"></div>
+                    <div class="leg-text">
+                        <span class="leg-name">Positive</span>
+                        <span class="leg-pct" id="pos-pct">—</span>
+                    </div>
+                    <span class="leg-count" id="pos-count">0</span>
+                </div>
+                <div class="legend-item" id="leg-neu">
+                    <div class="leg-dot" style="background:#f59e0b;"></div>
+                    <div class="leg-text">
+                        <span class="leg-name">Neutral</span>
+                        <span class="leg-pct" id="neu-pct">—</span>
+                    </div>
+                    <span class="leg-count" id="neu-count">0</span>
+                </div>
+                <div class="legend-item" id="leg-neg">
+                    <div class="leg-dot" style="background:#ff4444;"></div>
+                    <div class="leg-text">
+                        <span class="leg-name">Negative</span>
+                        <span class="leg-pct" id="neg-pct">—</span>
+                    </div>
+                    <span class="leg-count" id="neg-count">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sentiment Bar Strips -->
+        <div class="bar-section">
+            <div class="bar-row">
+                <span class="bar-label">😊 Positive</span>
+                <div class="bar-track">
+                    <div class="bar-fill green-fill" id="bar-pos" style="width:0%"></div>
+                </div>
+                <span class="bar-pct-val" id="bpv-pos">0%</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">😐 Neutral</span>
+                <div class="bar-track">
+                    <div class="bar-fill amber-fill" id="bar-neu" style="width:0%"></div>
+                </div>
+                <span class="bar-pct-val" id="bpv-neu">0%</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">😞 Negative</span>
+                <div class="bar-track">
+                    <div class="bar-fill red-fill" id="bar-neg" style="width:0%"></div>
+                </div>
+                <span class="bar-pct-val" id="bpv-neg">0%</span>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="tab active" data-filter="all"    id="tab-all">All</button>
+            <button class="tab"        data-filter="positive" id="tab-pos">😊 Positive</button>
+            <button class="tab"        data-filter="neutral"  id="tab-neu">😐 Neutral</button>
+            <button class="tab"        data-filter="negative" id="tab-neg">😞 Negative</button>
+        </div>
+
+        <!-- Comment List -->
+        <div class="comment-list" id="comment-list">
+            <!-- JS renders comment cards here -->
+        </div>
+
+    </div>
+
+    <!-- MANUAL INPUT STATE (fallback / manual mode) -->
+    <div class="manual-wrap hidden" id="screen-manual">
+        <div class="manual-header">
+            <span>✍️ Manual Mode</span>
+            <p>Paste a comment below to analyze it instantly</p>
+        </div>
+        <div class="manual-input-wrap">
+            <textarea
+                id="manual-textarea"
+                class="manual-textarea"
+                placeholder="Type or paste any comment here…"
+                rows="4"
+            ></textarea>
+        </div>
+        <button class="analyze-btn" id="manual-analyze-btn">Analyze →</button>
+        <div class="manual-result hidden" id="manual-result">
+            <div class="manual-badge" id="manual-badge"></div>
+            <div class="manual-conf-bars" id="manual-conf-bars"></div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ─── FOOTER TABS ─── -->
+<nav class="bottom-nav">
+    <button class="bnav-btn active" id="bnav-analyze" data-screen="analyze">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 14l4-5 3 3 3-4 4 6" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Analyze</span>
+    </button>
+    <button class="bnav-btn" id="bnav-manual" data-screen="manual">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5" />
+            <path d="M5 6h8M5 9h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>Manual</span>
+    </button>
+</nav>
+
+<!-- GSAP -->
+<script src="gsap.min.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
